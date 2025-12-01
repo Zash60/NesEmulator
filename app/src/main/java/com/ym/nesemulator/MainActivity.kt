@@ -59,12 +59,12 @@ class MainActivity : AppCompatActivity() {
         if (requestCode != 1000)
             return
         if (grantResults.isEmpty() || grantResults.size < 2) {
-            Toast.makeText(this, "权限获取失败", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Permissão negada. Ative nas configurações.", Toast.LENGTH_SHORT).show()
         } else {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                 startGame()
             } else {
-                Toast.makeText(this, "权限获取失败", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Permissão negada. Ative nas configurações.", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -73,7 +73,7 @@ class MainActivity : AppCompatActivity() {
      * 启动游戏
      */
     private fun startGame() {
-        val romFile = File(Environment.getExternalStorageDirectory().path + "/魂斗罗1.nes")
+        val romFile = File(Environment.getExternalStorageDirectory().path + "/jogo.nes")
         if (!romFile.exists()) {
             Toast.makeText(this, "文件不存在", Toast.LENGTH_SHORT).show()
             return
