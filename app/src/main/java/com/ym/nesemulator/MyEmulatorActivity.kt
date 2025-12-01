@@ -1,7 +1,11 @@
 package com.ym.nesemulator
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.view.MotionEvent
 import android.view.View
 import android.view.View.OnTouchListener
@@ -9,17 +13,14 @@ import android.widget.TextView
 import com.ym.library.base.BaseEmulatorActivity
 import com.ym.library.sdk.EmulatorManager
 
-/**
- * @Desc:自定义Nes游戏界面 在这里可以定义界面控件 诸如按钮等
- * @Author:Kevin
- * @Date:2023/2/17 15:25:37
- */
 class MyEmulatorActivity : BaseEmulatorActivity(), OnTouchListener {
 
-    //组件map 组件id为key value储存游戏玩家和对应的控制key
+    // Mapa de botões
     private val keyCompMap: HashMap<Int, Pair<EmulatorManager.Player, ArrayList<EmulatorManager.ControllerKey>>> =
         HashMap()
 
+    // Vibrador para feedback tátil
+    private var vibrator: Vibrator? = null
 
     override fun getLayoutResId(): Int {
         return R.layout.activity_nes_emulator
@@ -27,227 +28,86 @@ class MyEmulatorActivity : BaseEmulatorActivity(), OnTouchListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Inicializa o vibrador
+        vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        
         this.initKeyCompMap()
     }
 
-    /**
-     * 初始化控件-key的映射
-     */
+    private fun vibrate() {
+        if (vibrator?.hasVibrator() == true) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                // Vibração curta e leve para Android 8+
+                vibrator?.vibrate(VibrationEffect.createOneShot(30, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                // Vibração antiga
+                vibrator?.vibrate(30)
+            }
+        }
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     private fun initKeyCompMap() {
-        //Player 1
-        findViewById<TextView>(R.id.keyLeft)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER1,
-                arrayListOf(EmulatorManager.ControllerKey.LEFT)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyUp)?.apply {
-            keyCompMap[id] =
-                Pair(EmulatorManager.Player.PLAYER1, arrayListOf(EmulatorManager.ControllerKey.UP))
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyRight)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER1,
-                arrayListOf(EmulatorManager.ControllerKey.RIGHT)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyDown)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER1,
-                arrayListOf(EmulatorManager.ControllerKey.DOWN)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyLeftUp)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER1,
-                arrayListOf(EmulatorManager.ControllerKey.LEFT, EmulatorManager.ControllerKey.UP)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyRightUp)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER1,
-                arrayListOf(EmulatorManager.ControllerKey.RIGHT, EmulatorManager.ControllerKey.UP)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyRightDown)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER1,
-                arrayListOf(EmulatorManager.ControllerKey.RIGHT, EmulatorManager.ControllerKey.DOWN)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyLeftDown)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER1,
-                arrayListOf(EmulatorManager.ControllerKey.LEFT, EmulatorManager.ControllerKey.DOWN)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keySelect)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER1,
-                arrayListOf(EmulatorManager.ControllerKey.SELECT)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyStart)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER1,
-                arrayListOf(EmulatorManager.ControllerKey.START)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyA)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER1,
-                arrayListOf(EmulatorManager.ControllerKey.A)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyB)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER1,
-                arrayListOf(EmulatorManager.ControllerKey.B)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyATurbo)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER1,
-                arrayListOf(EmulatorManager.ControllerKey.A_TURBO)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyBTurbo)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER1,
-                arrayListOf(EmulatorManager.ControllerKey.B_TURBO)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
+        // Função auxiliar para registrar botões
+        fun registerBtn(id: Int, player: EmulatorManager.Player, keys: List<EmulatorManager.ControllerKey>) {
+            findViewById<View>(id)?.apply {
+                keyCompMap[this.id] = Pair(player, ArrayList(keys))
+                this.setOnTouchListener(this@MyEmulatorActivity)
+            }
         }
 
-        //Player 2
-        findViewById<TextView>(R.id.keyLeft2)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER2,
-                arrayListOf(EmulatorManager.ControllerKey.LEFT)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyUp2)?.apply {
-            keyCompMap[id] =
-                Pair(EmulatorManager.Player.PLAYER2, arrayListOf(EmulatorManager.ControllerKey.UP))
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyRight2)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER2,
-                arrayListOf(EmulatorManager.ControllerKey.RIGHT)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyDown2)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER2,
-                arrayListOf(EmulatorManager.ControllerKey.DOWN)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyLeftUp2)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER2,
-                arrayListOf(EmulatorManager.ControllerKey.LEFT, EmulatorManager.ControllerKey.UP)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyRightUp2)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER2,
-                arrayListOf(EmulatorManager.ControllerKey.RIGHT, EmulatorManager.ControllerKey.UP)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyRightDown2)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER2,
-                arrayListOf(EmulatorManager.ControllerKey.RIGHT, EmulatorManager.ControllerKey.DOWN)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyLeftDown2)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER2,
-                arrayListOf(EmulatorManager.ControllerKey.LEFT, EmulatorManager.ControllerKey.DOWN)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keySelect2)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER2,
-                arrayListOf(EmulatorManager.ControllerKey.SELECT)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyStart2)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER2,
-                arrayListOf(EmulatorManager.ControllerKey.START)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyA2)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER2,
-                arrayListOf(EmulatorManager.ControllerKey.A)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyB2)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER2,
-                arrayListOf(EmulatorManager.ControllerKey.B)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyATurbo2)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER2,
-                arrayListOf(EmulatorManager.ControllerKey.A_TURBO)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
-        findViewById<TextView>(R.id.keyBTurbo2)?.apply {
-            keyCompMap[id] = Pair(
-                EmulatorManager.Player.PLAYER2,
-                arrayListOf(EmulatorManager.ControllerKey.B_TURBO)
-            )
-            this.setOnTouchListener(this@MyEmulatorActivity)
-        }
+        val p1 = EmulatorManager.Player.PLAYER1
+
+        // Direcionais
+        registerBtn(R.id.keyLeft, p1, listOf(EmulatorManager.ControllerKey.LEFT))
+        registerBtn(R.id.keyUp, p1, listOf(EmulatorManager.ControllerKey.UP))
+        registerBtn(R.id.keyRight, p1, listOf(EmulatorManager.ControllerKey.RIGHT))
+        registerBtn(R.id.keyDown, p1, listOf(EmulatorManager.ControllerKey.DOWN))
+        
+        // Diagonais (Combinam duas teclas)
+        registerBtn(R.id.keyLeftUp, p1, listOf(EmulatorManager.ControllerKey.LEFT, EmulatorManager.ControllerKey.UP))
+        registerBtn(R.id.keyRightUp, p1, listOf(EmulatorManager.ControllerKey.RIGHT, EmulatorManager.ControllerKey.UP))
+        registerBtn(R.id.keyRightDown, p1, listOf(EmulatorManager.ControllerKey.RIGHT, EmulatorManager.ControllerKey.DOWN))
+        registerBtn(R.id.keyLeftDown, p1, listOf(EmulatorManager.ControllerKey.LEFT, EmulatorManager.ControllerKey.DOWN))
+
+        // Ações
+        registerBtn(R.id.keySelect, p1, listOf(EmulatorManager.ControllerKey.SELECT))
+        registerBtn(R.id.keyStart, p1, listOf(EmulatorManager.ControllerKey.START))
+        registerBtn(R.id.keyA, p1, listOf(EmulatorManager.ControllerKey.A))
+        registerBtn(R.id.keyB, p1, listOf(EmulatorManager.ControllerKey.B))
+        
+        // TURBO (Velocidade de tiro rápida)
+        registerBtn(R.id.keyATurbo, p1, listOf(EmulatorManager.ControllerKey.A_TURBO))
+        registerBtn(R.id.keyBTurbo, p1, listOf(EmulatorManager.ControllerKey.B_TURBO))
     }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+        val viewId = v?.id ?: return false
+        val keyData = keyCompMap[viewId] ?: return false
+        
+        val player = keyData.first
+        val keys = keyData.second
+
         when (event?.action) {
-            MotionEvent.ACTION_DOWN -> {//按下
-                val player = this.keyCompMap[v?.id]?.first
-                this.keyCompMap[v?.id]?.second?.forEach {
-                    EmulatorManager.getInstance()
-                        .pressKey(player, it)
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
+                // Ao tocar: Vibra e pressiona a tecla no emulador
+                vibrate()
+                
+                // Efeito visual de clique (opacidade)
+                v?.alpha = 0.6f 
+                
+                keys.forEach { key ->
+                    EmulatorManager.getInstance().pressKey(player, key)
                 }
             }
-            MotionEvent.ACTION_UP,
-            MotionEvent.ACTION_CANCEL -> {//松开
-                val player = this.keyCompMap[v?.id]?.first
-                this.keyCompMap[v?.id]?.second?.forEach {
-                    EmulatorManager.getInstance()
-                        .unPressKey(player, it)
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_CANCEL -> {
+                // Ao soltar: Restaura opacidade e solta tecla
+                v?.alpha = 1.0f
+                
+                keys.forEach { key ->
+                    EmulatorManager.getInstance().unPressKey(player, key)
                 }
             }
         }
